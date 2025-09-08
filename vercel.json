@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/cron/mplid-sync", "schedule": "*/10 * * * *" }]
+}

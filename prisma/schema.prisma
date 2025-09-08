@@ -1,0 +1,58 @@
+datasource db {
+provider = "postgresql"
+url = env("DATABASE_URL")
+}
+
+
+generator client {
+provider = "prisma-client-js"
+}
+
+
+model Team {
+id String @id @default(cuid())
+extId String? @unique
+name String @unique
+tag String?
+logo String?
+rating Float @default(1500)
+season String @default("S??")
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+
+stats TeamStats?
+standings Standing[]
+}
+
+
+model TeamStats {
+id String @id @default(cuid())
+teamId String @unique
+gamesPlayed Int @default(0)
+wins Int @default(0)
+losses Int @default(0)
+gameDiff Int?
+gpm Float?
+kda Float?
+objRate Float?
+updatedAt DateTime @updatedAt
+team Team @relation(fields: [teamId], references: [id])
+}
+
+
+model Standing {
+id String @id @default(cuid())
+teamId String
+rank Int
+wins Int
+losses Int
+points Int?
+season String
+updatedAt DateTime @updatedAt
+team Team @relation(fields: [teamId], references: [id])
+
+
+@@unique([teamId, season])
+@@index([season, rank])
+}
