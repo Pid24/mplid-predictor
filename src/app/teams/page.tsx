@@ -31,7 +31,6 @@ function deriveIdFromUrl(u?: string): string | null {
     const slug = parts[parts.length - 1];
     return slug || null;
   } catch {
-    // kalau bukan URL valid, coba regex sederhana
     const m = u.match(/\/team\/([^\/\?#]+)/i);
     return m?.[1] ?? null;
   }
@@ -78,8 +77,9 @@ export default async function TeamsPage() {
     <main className="mx-auto max-w-6xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teams</h1>
-        <Link href="/standings" className="text-sm underline">
-          ← Back to Standings
+        {/* Back ke halaman utama */}
+        <Link href="/" className="text-sm underline">
+          ← Back to Home
         </Link>
       </div>
 

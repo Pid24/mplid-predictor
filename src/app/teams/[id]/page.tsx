@@ -3,6 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { headers } from "next/headers";
 
+// ⬇️ Import langsung komponen client
+import PlayerHeroPools from "@/components/PlayerHeroPools";
+
 export const dynamic = "force-dynamic";
 
 // Bentuk data
@@ -112,7 +115,7 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
   // 2) Tentukan nama resmi untuk matching standings/stats
   const official = SLUG_TO_OFFICIAL[id] || team.name;
 
-  // 3) Ambil standings (dari proxy internal /api/standings) & team-stats & player-stats (upstream)
+  // 3) Ambil standings (proxy internal) & team-stats & player-stats (upstream)
   const [standRes, tstatsRes, pstatsRes] = await Promise.all([
     fetch(`${base}/api/standings`, { next: { revalidate: 60 } }),
     fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/team-stats/?format=json`, {
@@ -137,7 +140,7 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
   const re = SLUG_TO_PLAYERLOGO_RE[id] || new RegExp(`/${id}[-_]`, "i");
   const rosterRaw = playerStatsList.filter((p) => (p.player_logo ? re.test(p.player_logo) : false));
 
-  // Urutkan roster: by total_games desc, lalu avg_kda desc
+  // Urutkan roster
   rosterRaw.sort((a, b) => (b.total_games ?? 0) - (a.total_games ?? 0) || (b.avg_kda ?? 0) - (a.avg_kda ?? 0));
 
   return (
@@ -218,7 +221,8 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
               <div key={`${p.player_name}-${idx}`} className="rounded-xl border p-4 flex gap-3 items-start bg-white">
                 {p.player_logo ? <Image src={p.player_logo} alt={p.player_name} width={40} height={40} className="rounded" /> : <div className="h-10 w-10 rounded bg-gray-100" />}
                 <div className="min-w-0">
-                  <div className="font-medium">{p.player_name}</div>
+                  {/* Klik nama untuk buka modal Hero Pools */}
+                  <PlayerHeroPools playerName={p.player_name} className="font-medium underline underline-offset-2 decoration-dotted hover:no-underline text-blue-600" />
                   <div className="text-xs opacity-70">{p.lane || "-"}</div>
                   <div className="text-xs opacity-70 mt-1">
                     Games: {p.total_games ?? 0} • K/D/A rata-rata: {p.avg_kills ?? 0}/{p.avg_deaths ?? 0}/{p.avg_assists ?? 0} • KDA: {p.avg_kda ?? 0}
