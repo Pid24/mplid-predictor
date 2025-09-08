@@ -1,5 +1,6 @@
+// src/app/api/standings/route.ts
 // Normalisasi payload standings eksternal -> bentuk yang dipakai halaman:
-// { rank, team, wins, losses, points, game_diff, logo, match_wl, game_wl }
+// { rank, team, wins, losses, points, game_diff, logo, match_wl, game_wl, game_wins, game_losses }
 
 export const revalidate = 0;
 
@@ -22,8 +23,16 @@ function splitPair(s?: string | null): { a: number; b: number } {
 
 export async function GET() {
   const url = "https://mlbb-stats.ridwaanhall.com/api/mplid/standings/?format=json";
+
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "MPLID-Predictor/1.0 (+standings)",
+      },
+    });
+
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       return new Response(JSON.stringify({ error: "upstream_error", status: res.status, body: txt }), { status: 502, headers: { "content-type": "application/json" } });
@@ -31,14 +40,14 @@ export async function GET() {
 
     const raw = (await res.json()) as UpstreamRow[];
 
-    // Kalau upstream mengembalikan daftar endpoint (index), beri pesan jelas
+    // Jika upstream mengirim index endpoints (bukan data)
     if (Array.isArray(raw) && raw[0] && (raw[0] as any).name && (raw[0] as any).url) {
       return new Response(JSON.stringify({ error: "index_payload", note: "Upstream mengembalikan daftar endpoint, bukan standings." }), { status: 502, headers: { "content-type": "application/json" } });
     }
 
     const normalized = (raw || []).map((r) => {
       const matchPair = splitPair(r.match_wl); // W-L (match)
-      const gamePair = splitPair(r.game_wl); // GW-GL (game) — opsional kalau nanti mau dipakai
+      const gamePair = splitPair(r.game_wl); // GW-GL (game)
 
       return {
         rank: r.rank,
@@ -46,9 +55,10 @@ export async function GET() {
         wins: matchPair.a, // dari "match_wl"
         losses: matchPair.b,
         points: r.match_point ?? null,
-        game_diff: r.net_game_win ?? null, // dari "net_game_win"
-        logo: r.team_logo ?? null, // extra: bisa dipakai di UI kalau mau
-        // info tambahan (kalau halaman mau menampilkan apa adanya)
+        game_diff: r.net_game_win ?? null,
+        logo: r.team_logo ?? null,
+
+        // info tambahan untuk UI
         match_wl: r.match_wl ?? null,
         game_wl: r.game_wl ?? null,
         game_wins: gamePair.a,
@@ -58,7 +68,11 @@ export async function GET() {
 
     return new Response(JSON.stringify(normalized), {
       status: 200,
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "x-data-fetched-at": new Date().toISOString(), // untuk “Last updated” di UI
+        "cache-control": "public, max-age=0",
+      },
     });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: "proxy_crash", message: e?.message || String(e), url }), { status: 502, headers: { "content-type": "application/json" } });
