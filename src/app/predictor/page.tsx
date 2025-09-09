@@ -1,138 +1,90 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 
-type Team = { id: string; name: string; tag?: string | null; logo?: string | null };
-type PredictResp = {
-  teamA: { id: string; name: string; score: number };
-  teamB: { id: string; name: string; score: number };
-  probability: { teamA: number; teamB: number };
-  confidence: number;
-};
+type Team = { id: string; name: string; logo?: string | null };
 
 export default function PredictorPage() {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [a, setA] = useState<string>("");
-  const [b, setB] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PredictResp | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [left, setLeft] = useState<string>("");
+  const [right, setRight] = useState<string>("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/teams", { cache: "no-store" });
-        const data: Team[] = res.ok ? await res.json() : [];
-        setTeams(data);
-        if (data.length >= 2) {
-          setA(data[0].id);
-          setB(data[1].id);
-        }
-      } catch {
-        setTeams([]);
-      }
-    })();
-  }, []);
+  // TODO: ganti dengan fetch /api/teams agar dinamis
+  const teams: Team[] = useMemo(
+    () => [
+      { id: "onic", name: "ONIC" },
+      { id: "rrq", name: "RRQ HOSHI" },
+      { id: "btr", name: "BIGETRON BY VIT" },
+      { id: "evos", name: "EVOS" },
+      { id: "ae", name: "ALTER EGO ESPORTS" },
+      { id: "geek", name: "GEEK FAM" },
+      { id: "dewa", name: "DEWA UNITED" },
+      { id: "tlid", name: "TEAM LIQUID ID" },
+      { id: "navi", name: "NAVI" },
+    ],
+    []
+  );
 
-  const teamA = useMemo(() => teams.find((t) => t.id === a), [teams, a]);
-  const teamB = useMemo(() => teams.find((t) => t.id === b), [teams, b]);
-
-  async function predict() {
-    setErr(null);
-    setResult(null);
-    if (!a || !b || a === b) {
-      setErr("Pilih dua tim yang berbeda.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamA: a, teamB: b }),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j?.error || `HTTP ${res.status}`);
-      }
-      const j = (await res.json()) as PredictResp;
-      setResult(j);
-    } catch (e: any) {
-      setErr(e?.message || "Gagal memprediksi.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const pctA = result ? Math.round(result.probability.teamA * 100) : 0;
-  const pctB = result ? Math.round(result.probability.teamB * 100) : 0;
+  // placeholder “90% look”
+  const probability = useMemo(() => {
+    if (!left || !right || left === right) return null;
+    const seed = (left.charCodeAt(0) * 31 + right.charCodeAt(0)) % 100;
+    const pLeft = Math.min(90, Math.max(10, 45 + (seed - 50))); // clamp 10–90
+    return { left: pLeft, right: 100 - pLeft };
+  }, [left, right]);
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <section className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Match Predictor</h1>
-        <Link href="/" className="text-sm underline">
-          ← Back to Home
+        <h1 className="text-2xl font-bold">Predictor</h1>
+        <Link href="/standings" className="btn-ghost">
+          Lihat Standings
         </Link>
       </div>
 
-      <div className="mt-4 grid sm:grid-cols-2 gap-4">
-        <TeamPicker label="Team A" teams={teams} value={a} onChange={setA} />
-        <TeamPicker label="Team B" teams={teams} value={b} onChange={setB} />
-      </div>
-
-      <button onClick={predict} disabled={loading || !a || !b || a === b} className="mt-4 rounded-lg border px-4 py-2 hover:shadow-sm disabled:opacity-50">
-        {loading ? "Predicting..." : "Predict"}
-      </button>
-
-      {err && <div className="mt-3 rounded border p-3 text-sm text-red-600 bg-red-50">{err}</div>}
-
-      {result && (
-        <div className="mt-6 space-y-4">
-          <ProbCard team={teamA} percent={pctA} side="left" />
-          <ProbCard team={teamB} percent={pctB} side="right" />
-          <div className="text-xs opacity-70">Model confidence: {(result.confidence * 100).toFixed(0)}%. Ini probabilitas, bukan jaminan hasil 😄.</div>
-        </div>
-      )}
-
-      <div className="text-[11px] opacity-60 mt-6">Catatan: Model menggabungkan standings & team-stats (gold, damage, objectives, KDA proxy) lalu memakai Bradley–Terry/logistic untuk memproyeksikan peluang menang.</div>
-    </main>
-  );
-}
-
-function TeamPicker({ label, teams, value, onChange }: { label: string; teams: Team[]; value: string; onChange: (v: string) => void }) {
-  return (
-    <label className="block">
-      <div className="text-sm opacity-70 mb-1">{label}</div>
-      <select className="w-full border rounded-lg px-3 py-2 bg-white" value={value} onChange={(e) => onChange(e.target.value)}>
-        {teams.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.tag ? `${t.tag} — ${t.name}` : t.name}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function ProbCard({ team, percent, side }: { team?: Team; percent: number; side: "left" | "right" }) {
-  return (
-    <div className="border rounded-xl p-4 bg-white">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          {team?.logo ? <Image src={team.logo} alt={team.name} width={36} height={36} className="rounded" /> : <div className="h-9 w-9 rounded bg-gray-100" />}
+      <div className="card p-6">
+        <div className="grid md:grid-cols-3 gap-4 items-end">
           <div>
-            <div className="font-medium">{team?.name ?? "-"}</div>
-            <div className="text-xs opacity-70">Win chance</div>
+            <label className="text-sm text-[var(--text-dim)]">Team A</label>
+            <select className="mt-1 w-full card p-3" value={left} onChange={(e) => setLeft(e.target.value)}>
+              <option value="">— pilih —</option>
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-center text-[var(--text-dim)]">vs</div>
+          <div>
+            <label className="text-sm text-[var(--text-dim)]">Team B</label>
+            <select className="mt-1 w-full card p-3" value={right} onChange={(e) => setRight(e.target.value)}>
+              <option value="">— pilih —</option>
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        <div className="text-2xl font-semibold">{percent}%</div>
+
+        {probability && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between text-sm text-[var(--text-dim)] mb-2">
+              <span>{teams.find((t) => t.id === left)?.name}</span>
+              <span>{teams.find((t) => t.id === right)?.name}</span>
+            </div>
+            <div className="h-3 w-full rounded-full bg-[var(--bg-soft)] overflow-hidden">
+              <div className="h-full bg-[var(--accent-600)]" style={{ width: `${probability.left}%` }} title={`${probability.left}%`} />
+            </div>
+            <div className="mt-2 flex items-center justify-between font-semibold">
+              <span>{probability.left}%</span>
+              <span>{probability.right}%</span>
+            </div>
+            <div className="text-xs text-[var(--text-dim)] mt-2">*Model sederhana (placeholder). Nanti bisa diganti dengan model berbasis standings, H2H, form, dsb.</div>
+          </div>
+        )}
       </div>
-      <div className="mt-3 h-2 bg-gray-100 rounded">
-        <div className={`h-2 rounded ${side === "left" ? "bg-black" : "bg-gray-700"}`} style={{ width: `${percent}%` }} />
-      </div>
-    </div>
+    </section>
   );
 }

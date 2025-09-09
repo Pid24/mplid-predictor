@@ -1,11 +1,6 @@
-// src/app/mvp/page.tsx
 import Image from "next/image";
-import Link from "next/link";
-import { headers } from "next/headers";
 
-export const dynamic = "force-dynamic";
-
-type MVPRow = {
+type MvpRow = {
   rank: number;
   player_name: string;
   player_logo?: string | null;
@@ -13,52 +8,42 @@ type MVPRow = {
   point: number;
 };
 
-function getBaseUrl() {
-  const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
-  if (env) return env;
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
+export const dynamic = "force-dynamic";
 
 export default async function MVPPage() {
-  const base = getBaseUrl();
-
-  // Ambil dari API internal /api/mvp (yang sudah kamu buat)
-  const res = await fetch(`${base}/api/mvp`, { cache: "no-store" });
-  const rows: MVPRow[] = res.ok ? await res.json() : [];
+  const url = process.env.MPL_MVP_URL || "https://mlbb-stats.ridwaanhall.com/api/mplid/standings-mvp/";
+  const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+  const data: MvpRow[] = res.ok ? await res.json() : [];
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">MVP Leaderboard</h1>
-        <Link href="/" className="text-sm underline">
-          ← Back to Home
-        </Link>
+        <h1 className="text-2xl font-bold">MVP Radar</h1>
+        <span className="chip">Live</span>
       </div>
 
-      {rows.length === 0 ? (
-        <div className="rounded border p-4 text-sm mt-4">Belum ada data MVP.</div>
+      {data.length === 0 ? (
+        <div className="card p-6">Belum ada data MVP.</div>
       ) : (
-        <div className="mt-4 space-y-3">
-          {rows.map((r) => (
-            <div key={r.rank} className="flex items-center justify-between border rounded-xl p-3 bg-white">
-              <div className="flex items-center gap-3">
-                <div className="text-xs font-semibold border rounded px-2 py-1">#{r.rank}</div>
-                {r.player_logo ? <Image src={r.player_logo} alt={r.player_name} width={36} height={36} className="rounded" /> : <div className="h-9 w-9 rounded bg-gray-100" />}
-                <div>
-                  <div className="font-medium leading-tight">{r.player_name}</div>
-                  <div className="text-xs opacity-70 leading-tight">Points: {r.point}</div>
-                </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {data.map((p) => (
+            <div key={p.rank} className="card p-4 card-hover flex gap-3 items-center">
+              <div className="shrink-0 relative h-12 w-12 rounded-xl overflow-hidden border">
+                {p.player_logo ? <Image src={p.player_logo} alt={p.player_name} fill className="object-cover" unoptimized /> : <div className="h-full w-full bg-[var(--bg-soft)]" />}
               </div>
-              {r.team_logo ? <Image src={r.team_logo} alt="team" width={28} height={28} className="rounded" /> : <div className="h-7 w-7 rounded bg-gray-100" />}
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="chip">#{p.rank}</span>
+                  {p.team_logo && <Image src={p.team_logo} alt="team" width={18} height={18} className="rounded" unoptimized />}
+                </div>
+                <div className="font-semibold truncate mt-1">{p.player_name}</div>
+                <div className="text-sm text-[var(--text-dim)]">Poin: {p.point}</div>
+              </div>
             </div>
           ))}
         </div>
       )}
-
-      <div className="text-[11px] opacity-60 mt-3">Catatan: Data untuk hiburan & informasi. Update interval ±2 menit.</div>
-    </main>
+    </section>
   );
 }

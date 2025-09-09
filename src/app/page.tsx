@@ -1,75 +1,44 @@
-// src/app/page.tsx
 import Link from "next/link";
-import { headers } from "next/headers";
 
-export const dynamic = "force-dynamic";
-
-type MVPRow = { rank: number; player_name: string; player_logo?: string | null; point: number };
-
-function getBaseUrl() {
-  const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
-  if (env) return env;
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
-
-async function getTopMVP(n = 5): Promise<MVPRow[]> {
-  try {
-    const base = getBaseUrl();
-    const res = await fetch(`${base}/api/mvp`, { next: { revalidate: 120 } });
-    if (!res.ok) return [];
-    const all = (await res.json()) as MVPRow[];
-    return all.slice(0, n);
-  } catch {
-    return [];
-  }
-}
-
-export default async function Home() {
-  const top = await getTopMVP();
-
+export default function Home() {
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-2xl font-bold">MPL ID Predictor</h1>
-      <p className="mt-2 text-sm opacity-70">Web kecil buat lihat klasemen, tim, MVP, dan (nanti) prediksi matchup.</p>
-
-      <div className="mt-4 space-x-3">
-        <Link className="underline" href="/standings">
-          Standings
-        </Link>
-        <Link className="underline" href="/teams">
-          Teams
-        </Link>
-        <Link className="underline" href="/mvp">
-          MVP
-        </Link>
-        <Link className="underline opacity-60" href="/predictor">
-          Predictor
-        </Link>
-      </div>
-
-      {/* Teaser MVP */}
-      {top.length > 0 && (
-        <section className="mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Top MVP</h2>
-            <Link href="/mvp" className="text-sm underline">
-              Lihat semua →
-            </Link>
+    <div className="space-y-10">
+      {/* Hero */}
+      <section className="card p-8 bg-grid">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+          <div className="flex-1">
+            <p className="chip mb-3">MPL Indonesia</p>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+              Klasemen, Roster, dan <span className="text-[var(--accent-600)]">Prediksi Matchup</span>
+            </h1>
+            <p className="mt-3 text-[var(--text-dim)] leading-relaxed">Lihat performa tim & pemain secara ringkas. Predictor akan memberi probabilitas menang berbasis data.</p>
+            <div className="mt-6 flex gap-3">
+              <Link href="/predictor" className="btn">
+                Coba Predictor
+              </Link>
+              <Link href="/standings" className="btn-ghost">
+                Lihat Standings →
+              </Link>
+            </div>
           </div>
-          <ul className="mt-3 space-y-2">
-            {top.map((r) => (
-              <li key={r.rank} className="flex items-center gap-3 text-sm">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded border">{r.rank}</span>
-                <span className="truncate flex-1">{r.player_name}</span>
-                <span className="opacity-70">{r.point} pts</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </main>
+        </div>
+      </section>
+
+      {/* Quick sections */}
+      <section className="grid md:grid-cols-3 gap-4">
+        <Link href="/standings" className="card p-6 card-hover">
+          <h3 className="font-semibold text-lg">Standings</h3>
+          <p className="text-sm text-[var(--text-dim)] mt-1">Poin, win–loss, dan net game win terbaru.</p>
+        </Link>
+        <Link href="/teams" className="card p-6 card-hover">
+          <h3 className="font-semibold text-lg">Teams</h3>
+          <p className="text-sm text-[var(--text-dim)] mt-1">Logo, roster, dan metrik ringkas tiap tim.</p>
+        </Link>
+        <Link href="/mvp" className="card p-6 card-hover">
+          <h3 className="font-semibold text-lg">MVP Radar</h3>
+          <p className="text-sm text-[var(--text-dim)] mt-1">Top pemain berdasarkan poin MVP.</p>
+        </Link>
+      </section>
+    </div>
   );
 }
