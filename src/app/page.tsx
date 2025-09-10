@@ -1,6 +1,7 @@
 // src/app/page.tsx
 import Link from "next/link";
 import PlayerPoolsMini from "@/components/player/PlayerPoolsMini";
+import TransfersMini from "@/components/transfers/TransfersMini";
 
 export default function Home() {
   return (
@@ -42,12 +43,18 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Teaser player-pools */}
-      <section className="card p-6">
-        <h3 className="font-semibold text-lg mb-3">Player Pools Teratas</h3>
-        {/* contoh tanpa filter tim */}
-        {/* @ts-expect-error Server Component in Server Component (OK) */}
-        <PlayerPoolsMini limit={5} />
+      {/* 2-kolom teaser: Player Pools & Transfers */}
+      <section className="grid md:grid-cols-2 gap-4">
+        <div className="card p-6">
+          <h3 className="font-semibold text-lg mb-3">Player Pools Teratas</h3>
+          {/* @ts-expect-error Server Component in Server Component */}
+          <PlayerPoolsMini limit={5} />
+        </div>
+
+        <div className="card p-6">
+          {/* @ts-expect-error Server Component in Server Component */}
+          <TransfersMini limit={6} />
+        </div>
       </section>
     </div>
   );
