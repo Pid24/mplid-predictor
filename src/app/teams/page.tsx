@@ -1,7 +1,6 @@
-// src/app/teams/page.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +13,11 @@ type TeamRaw = {
   team_name?: string;
 };
 
-function getBaseUrl() {
-  const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
-  if (env) return env;
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
-
 function deriveIdFromUrl(u?: string): string | null {
   if (!u) return null;
   try {
     const url = new URL(u);
-    const parts = url.pathname.split("/").filter(Boolean); // e.g. ["team","ae"]
+    const parts = url.pathname.split("/").filter(Boolean);
     const slug = parts[parts.length - 1];
     return slug || null;
   } catch {
@@ -38,7 +28,7 @@ function deriveIdFromUrl(u?: string): string | null {
 
 async function getTeams(): Promise<{ teams: TeamNorm[]; ok: boolean; note?: string }> {
   try {
-    const base = getBaseUrl();
+    const base = await getBaseUrl(); // ⬅️ penting: await
     const res = await fetch(`${base}/api/teams`, { next: { revalidate: 300 } });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
@@ -46,21 +36,15 @@ async function getTeams(): Promise<{ teams: TeamNorm[]; ok: boolean; note?: stri
     }
     const data = (await res.json()) as any[];
 
-    // jika sudah normal: ada "id" & "name"
     if (Array.isArray(data) && data.length && "id" in data[0] && "name" in data[0]) {
       return { teams: data as TeamNorm[], ok: true };
     }
 
-    // fallback: bentuk mentah → normalisasi di sini
+    // fallback normalisasi
     const mapped: TeamNorm[] = (data as TeamRaw[])
       .map((t) => {
         const id = deriveIdFromUrl(t.team_url) ?? (t.team_name ?? "").toLowerCase();
-        return {
-          id,
-          name: t.team_name ?? "Unknown",
-          logo: t.team_logo ?? null,
-          tag: null,
-        };
+        return { id, name: t.team_name ?? "Unknown", logo: t.team_logo ?? null, tag: null };
       })
       .filter((t) => !!t.id && !!t.name);
 
@@ -77,7 +61,6 @@ export default async function TeamsPage() {
     <main className="mx-auto max-w-6xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teams</h1>
-        {/* Back ke halaman utama */}
         <Link href="/" className="text-sm underline">
           ← Back to Home
         </Link>

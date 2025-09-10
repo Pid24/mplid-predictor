@@ -1,4 +1,3 @@
-// src/app/standings/page.tsx
 import Image from "next/image";
 import { getBaseUrl } from "@/lib/base-url";
 import LastUpdated from "@/components/common/LastUpdated";
@@ -25,7 +24,7 @@ async function getStandings(): Promise<{
   lastUpdated?: string;
 }> {
   try {
-    const base = getBaseUrl();
+    const base = await getBaseUrl(); // ⬅️ penting: await
     const url = `${base}/api/standings`;
     const res = await fetch(url, { next: { revalidate: 0 } });
 

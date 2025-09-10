@@ -1,4 +1,3 @@
-// src/app/player-pools/page.tsx
 import PlayerRow from "@/components/player/PlayerRow";
 import { getBaseUrl } from "@/lib/base-url";
 
@@ -14,7 +13,7 @@ async function getData(sp: SearchParams) {
   if (sp.player) qs.set("player", sp.player);
   if (sp.raw) qs.set("raw", sp.raw);
 
-  const base = getBaseUrl();
+  const base = await getBaseUrl(); // ⬅️ penting: await
   const url = `${base}/api/player-pools${qs.toString() ? `?${qs}` : ""}`;
 
   const res = await fetch(url, { cache: "no-store", next: { revalidate: 0 } });

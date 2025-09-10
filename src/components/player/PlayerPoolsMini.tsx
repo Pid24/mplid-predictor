@@ -1,4 +1,3 @@
-// src/components/player/PlayerPoolsMini.tsx
 // Server Component
 import Link from "next/link";
 import { getBaseUrl } from "@/lib/base-url";
@@ -22,11 +21,8 @@ function HeroLogoOrBadge({ src, alt }: { src?: string | null; alt: string }) {
 }
 
 async function getTopHeroes(limit = 5) {
-  const base = getBaseUrl();
-  const res = await fetch(`${base}/api/player-pools?raw=1`, {
-    cache: "no-store",
-    next: { revalidate: 0 },
-  });
+  const base = await getBaseUrl(); // ⬅️ penting: await
+  const res = await fetch(`${base}/api/player-pools?raw=1`, { cache: "no-store", next: { revalidate: 0 } });
   if (!res.ok) throw new Error(`Failed to load player-pools (${res.status})`);
 
   const data: HeroRow[] = await res.json();
@@ -36,7 +32,7 @@ async function getTopHeroes(limit = 5) {
       const totalPicks = (h.players ?? []).reduce((sum, p) => sum + (typeof p?.pick === "number" ? p.pick : 0), 0);
       return { ...h, totalPicks };
     })
-    .sort((a, b) => b.totalPicks - a.totalPicks)
+    .sort((a, b) => (b as any).totalPicks - (a as any).totalPicks)
     .slice(0, limit);
 
   return ranked as Array<HeroRow & { totalPicks: number }>;

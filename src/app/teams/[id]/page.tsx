@@ -1,36 +1,15 @@
-// src/app/teams/[id]/page.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/base-url";
 
-// ⬇️ Import langsung komponen client
+// ⬇️ Client Component untuk modal pools (biarkan seperti semula)
 import PlayerHeroPools from "@/components/PlayerHeroPools";
 
 export const dynamic = "force-dynamic";
 
-// Bentuk data
 type TeamListItem = { id: string; name: string; tag?: string | null; logo?: string | null };
-type StandRow = {
-  rank: number;
-  team: string;
-  points?: number | null;
-  match_wl?: string | null;
-  game_wl?: string | null;
-  game_diff?: number | null;
-  logo?: string | null;
-};
-type TeamStatsRow = {
-  team_name: string;
-  team_logo?: string | null;
-  kills?: number;
-  deaths?: number;
-  assists?: number;
-  gold?: number;
-  damage?: number;
-  lord?: number;
-  tortoise?: number; // turtle
-  tower?: number;
-};
+type StandRow = { rank: number; team: string; points?: number | null; match_wl?: string | null; game_wl?: string | null; game_diff?: number | null; logo?: string | null };
+type TeamStatsRow = { team_name: string; team_logo?: string | null; kills?: number; deaths?: number; assists?: number; gold?: number; damage?: number; lord?: number; tortoise?: number; tower?: number };
 type PlayerStatsRow = {
   player_name: string;
   player_logo?: string | null;
@@ -46,20 +25,10 @@ type PlayerStatsRow = {
   kill_participation?: string;
 };
 
-function getBaseUrl() {
-  const env = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
-  if (env) return env;
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
-
 function norm(s?: string) {
   return (s ?? "").trim().toLowerCase();
 }
 
-// Mapping slug → nama resmi (supaya ketemu di standings & team-stats)
 const SLUG_TO_OFFICIAL: Record<string, string> = {
   ae: "ALTER EGO ESPORTS",
   btr: "BIGETRON BY VIT",
@@ -72,7 +41,6 @@ const SLUG_TO_OFFICIAL: Record<string, string> = {
   navi: "NAVI",
 };
 
-// Mapping slug → pola regex untuk filter player-stats via player_logo
 const SLUG_TO_PLAYERLOGO_RE: Record<string, RegExp> = {
   ae: /\/ae[-_]/i,
   btr: /btr[_-]vit|bigetron|\/btr/i,
@@ -91,11 +59,9 @@ function formatNum(n?: number | null) {
 }
 
 export default async function TeamDetailPage(props: { params: Promise<{ id: string }> }) {
-  // Next.js 15: params harus di-await
   const { id } = await props.params;
-  const base = getBaseUrl();
+  const base = await getBaseUrl(); // ⬅️ penting: await
 
-  // 1) Ambil list tim dari API internal, cari yang slug/id sama
   const teamsRes = await fetch(`${base}/api/teams`, { next: { revalidate: 300 } });
   const teams: TeamListItem[] = teamsRes.ok ? await teamsRes.json() : [];
   const team = teams.find((t) => t.id === id);
@@ -112,35 +78,23 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
     );
   }
 
-  // 2) Tentukan nama resmi untuk matching standings/stats
   const official = SLUG_TO_OFFICIAL[id] || team.name;
 
-  // 3) Ambil standings (proxy internal) & team-stats & player-stats (upstream)
   const [standRes, tstatsRes, pstatsRes] = await Promise.all([
     fetch(`${base}/api/standings`, { next: { revalidate: 60 } }),
-    fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/team-stats/?format=json`, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    }),
-    fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/player-stats/?format=json`, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    }),
+    fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/team-stats/?format=json`, { cache: "no-store", headers: { Accept: "application/json" } }),
+    fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/player-stats/?format=json`, { cache: "no-store", headers: { Accept: "application/json" } }),
   ]);
 
   const standings: StandRow[] = standRes.ok ? await standRes.json() : [];
   const teamStatsList: TeamStatsRow[] = tstatsRes.ok ? await tstatsRes.json() : [];
   const playerStatsList: PlayerStatsRow[] = pstatsRes.ok ? await pstatsRes.json() : [];
 
-  // 4) Pick data untuk tim ini
   const sRow = standings.find((s) => norm(s.team) === norm(official));
   const stRow = teamStatsList.find((s) => norm(s.team_name) === norm(official));
 
-  // Filter roster dari player-stats via regex di player_logo
   const re = SLUG_TO_PLAYERLOGO_RE[id] || new RegExp(`/${id}[-_]`, "i");
   const rosterRaw = playerStatsList.filter((p) => (p.player_logo ? re.test(p.player_logo) : false));
-
-  // Urutkan roster
   rosterRaw.sort((a, b) => (b.total_games ?? 0) - (a.total_games ?? 0) || (b.avg_kda ?? 0) - (a.avg_kda ?? 0));
 
   return (
@@ -160,7 +114,6 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Ringkasan performa dari standings */}
       <div className="grid sm:grid-cols-3 gap-4 mt-6">
         <div className="rounded-xl border p-4">
           <div className="text-sm opacity-70">Rank</div>
@@ -179,7 +132,6 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Team Stats (aggregate) */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-2">Team Stats</h2>
         {stRow ? (
@@ -210,7 +162,6 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
         )}
       </div>
 
-      {/* Roster dari player-stats */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Roster (berdasarkan player-stats)</h2>
         {rosterRaw.length === 0 ? (
@@ -221,7 +172,6 @@ export default async function TeamDetailPage(props: { params: Promise<{ id: stri
               <div key={`${p.player_name}-${idx}`} className="rounded-xl border p-4 flex gap-3 items-start bg-white">
                 {p.player_logo ? <Image src={p.player_logo} alt={p.player_name} width={40} height={40} className="rounded" /> : <div className="h-10 w-10 rounded bg-gray-100" />}
                 <div className="min-w-0">
-                  {/* Klik nama untuk buka modal Hero Pools */}
                   <PlayerHeroPools playerName={p.player_name} className="font-medium underline underline-offset-2 decoration-dotted hover:no-underline text-blue-600" />
                   <div className="text-xs opacity-70">{p.lane || "-"}</div>
                   <div className="text-xs opacity-70 mt-1">
