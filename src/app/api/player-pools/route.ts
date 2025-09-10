@@ -1,6 +1,9 @@
 // src/app/api/player-pools/route.ts
 import { NextResponse } from "next/server";
 
+export const runtime = "edge"; // ✅ Edge
+export const revalidate = 0; // selalu fresh via server
+
 const REMOTE = "https://mlbb-stats.ridwaanhall.com/api/mplid/player-pools/";
 
 function parsePlayerInfo(info?: string) {
@@ -37,23 +40,36 @@ function filterPools(data: any[], qTeam?: string | null, qPlayer?: string | null
 }
 
 export async function GET(req: Request) {
+  const fetchedAt = new Date().toISOString();
   const { searchParams } = new URL(req.url);
   const team = searchParams.get("team");
   const player = searchParams.get("player");
   const raw = searchParams.get("raw");
 
   try {
-    const res = await fetch(REMOTE, { cache: "no-store", next: { revalidate: 0 } });
+    const res = await fetch(REMOTE, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "MPLID-Predictor/1.0 (+player-pools)",
+      },
+      next: { revalidate: 0 },
+    });
+
     if (!res.ok) {
-      return NextResponse.json({ error: "Upstream error", status: res.status }, { status: res.status });
+      return NextResponse.json({ error: "Upstream error", status: res.status }, { status: res.status, headers: { "x-data-fetched-at": fetchedAt } });
     }
+
     const data = await res.json();
-    if (raw) return NextResponse.json(data, { status: 200 });
+    if (raw) return new NextResponse(JSON.stringify(data), { status: 200, headers: { "x-data-fetched-at": fetchedAt } });
 
     const enriched = enrich(data);
     const filtered = filterPools(enriched, team, player);
-    return NextResponse.json(filtered, { status: 200 });
+    return new NextResponse(JSON.stringify(filtered), { status: 200, headers: { "x-data-fetched-at": fetchedAt } });
   } catch {
-    return NextResponse.json({ error: "Failed to fetch player-pools upstream" }, { status: 502 });
+    return new NextResponse(JSON.stringify({ error: "Failed to fetch player-pools upstream" }), {
+      status: 502,
+      headers: { "x-data-fetched-at": fetchedAt },
+    });
   }
 }

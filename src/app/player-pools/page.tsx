@@ -1,7 +1,6 @@
 // src/app/player-pools/page.tsx
 import PlayerRow from "@/components/player/PlayerRow";
-import { headers } from "next/headers";
-import * as React from "react";
+import { getBaseUrl } from "@/lib/base-url";
 
 type SearchParams = {
   team?: string;
@@ -9,31 +8,21 @@ type SearchParams = {
   raw?: string;
 };
 
-async function getBaseUrl() {
-  const h = await headers();
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  if (!host) throw new Error("Missing host header");
-  return `${proto}://${host}`;
-}
-
 async function getData(sp: SearchParams) {
   const qs = new URLSearchParams();
   if (sp.team) qs.set("team", sp.team);
   if (sp.player) qs.set("player", sp.player);
   if (sp.raw) qs.set("raw", sp.raw);
 
-  const base = await getBaseUrl();
+  const base = getBaseUrl();
   const url = `${base}/api/player-pools${qs.toString() ? `?${qs}` : ""}`;
 
   const res = await fetch(url, { cache: "no-store", next: { revalidate: 0 } });
-  if (!res.ok) {
-    throw new Error(`Failed to load player-pools (${res.status})`);
-  }
+  if (!res.ok) throw new Error(`Failed to load player-pools (${res.status})`);
   return res.json();
 }
 
-// Next.js 15+ mengirim searchParams sebagai async (awaitable)
+// Next.js 15+: searchParams bisa Promise
 export default async function PlayerPoolsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const data = await getData(sp);

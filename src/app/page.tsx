@@ -1,7 +1,10 @@
 // src/app/page.tsx
 import Link from "next/link";
+import { Suspense } from "react";
 import PlayerPoolsMini from "@/components/player/PlayerPoolsMini";
+import PlayerPoolsMiniSkeleton from "@/components/player/PlayerPoolsMini.skeleton";
 import TransfersMini from "@/components/transfers/TransfersMini";
+import TransfersMiniSkeleton from "@/components/transfers/TransfersMini.skeleton";
 
 export default function Home() {
   return (
@@ -47,13 +50,17 @@ export default function Home() {
       <section className="grid md:grid-cols-2 gap-4">
         <div className="card p-6">
           <h3 className="font-semibold text-lg mb-3">Player Pools Teratas</h3>
-          {/* @ts-expect-error Server Component in Server Component */}
-          <PlayerPoolsMini limit={5} />
+          <Suspense fallback={<PlayerPoolsMiniSkeleton rows={5} />}>
+            {/* @ts-expect-error Server Component in Server Component */}
+            <PlayerPoolsMini limit={5} />
+          </Suspense>
         </div>
 
         <div className="card p-6">
-          {/* @ts-expect-error Server Component in Server Component */}
-          <TransfersMini limit={6} />
+          <Suspense fallback={<TransfersMiniSkeleton rows={6} />}>
+            {/* @ts-expect-error Server Component in Server Component */}
+            <TransfersMini limit={6} />
+          </Suspense>
         </div>
       </section>
     </div>

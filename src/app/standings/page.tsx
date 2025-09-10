@@ -1,6 +1,7 @@
 // src/app/standings/page.tsx
 import Image from "next/image";
-import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/base-url";
+import LastUpdated from "@/components/common/LastUpdated";
 
 export const dynamic = "force-dynamic";
 
@@ -15,27 +16,6 @@ type Row = {
   match_wl?: string | null;
   game_wl?: string | null;
 };
-
-function getBaseUrl() {
-  // 1) Kalau ada env, pakai itu
-  const fromEnv = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
-  if (fromEnv) return fromEnv;
-
-  // 2) Deteksi dari request headers (works di dev & prod/Vercel)
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
-
-function formatJakarta(iso?: string | null) {
-  if (!iso) return "-";
-  try {
-    return new Date(iso).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
-  } catch {
-    return iso ?? "-";
-  }
-}
 
 async function getStandings(): Promise<{
   rows: Row[];
@@ -53,13 +33,7 @@ async function getStandings(): Promise<{
 
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
-      return {
-        rows: [],
-        from: url,
-        ok: false,
-        note: j?.note || j?.error || `HTTP ${res.status}`,
-        lastUpdated,
-      };
+      return { rows: [], from: url, ok: false, note: j?.note || j?.error || `HTTP ${res.status}`, lastUpdated };
     }
 
     const data = (await res.json()) as Row[];
@@ -76,7 +50,7 @@ export default async function StandingsPage() {
     <main className="mx-auto max-w-5xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">MPL ID Standings</h1>
-        <div className="text-xs opacity-70">Last updated: {formatJakarta(lastUpdated)}</div>
+        <LastUpdated iso={lastUpdated} />
       </div>
 
       {!ok && (
@@ -96,7 +70,7 @@ export default async function StandingsPage() {
         <div className="rounded border p-4 text-sm">
           <p>Belum ada data dari API.</p>
           <p className="opacity-70 mt-1">
-            Jika upstream memang belum mengembalikan standings, gunakan endpoint lain (mis. <code>/api/teams</code>) dulu.
+            Jika upstream belum mengembalikan standings, gunakan endpoint lain (mis. <code>/api/teams</code>) dulu.
           </p>
         </div>
       ) : (

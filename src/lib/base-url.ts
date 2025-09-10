@@ -1,10 +1,17 @@
 // src/lib/base-url.ts
 import { headers } from "next/headers";
 
-export async function getBaseUrl() {
-  const h = await headers(); // ⟵ wajib await di Next 15
+/**
+ * Kembalikan absolute base URL untuk server components / route handlers.
+ * - Pakai env kalau ada (mis. untuk preview deploy)
+ * - Kalau tidak ada, ambil dari request headers (dev & prod)
+ */
+export function getBaseUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
+  if (fromEnv) return fromEnv;
+
+  const h = headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? "http";
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  if (!host) throw new Error("Missing host header");
   return `${proto}://${host}`;
 }
