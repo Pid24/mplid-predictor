@@ -1,4 +1,6 @@
+// src/app/page.tsx
 import Link from "next/link";
+import PlayerPoolsMini from "@/components/player/PlayerPoolsMini";
 
 export default function Home() {
   return (
@@ -38,6 +40,14 @@ export default function Home() {
           <h3 className="font-semibold text-lg">MVP Radar</h3>
           <p className="text-sm text-[var(--text-dim)] mt-1">Top pemain berdasarkan poin MVP.</p>
         </Link>
+      </section>
+
+      {/* Teaser player-pools */}
+      <section className="card p-6">
+        <h3 className="font-semibold text-lg mb-3">Player Pools Teratas</h3>
+        {/* contoh tanpa filter tim */}
+        {/* @ts-expect-error Server Component in Server Component (OK) */}
+        <PlayerPoolsMini limit={5} />
       </section>
     </div>
   );

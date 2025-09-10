@@ -1,99 +1,84 @@
 // src/data/h2h.ts
-// Manual H2H MPL ID (Week 1–3) — format game score (best-of-3).
-// SENGAJA pakai singkatan tim biar gampang input, lalu dinormalisasi.
-
-export type H2HRow = {
+export type Match = {
   week: number;
-  a: string; // singkatan (ONIC, BTR, RRQ, AE, EVOS, GEEK, TLID, NAVI, DEWA)
-  b: string;
-  a_games: number; // jumlah game dimenangkan tim a
-  b_games: number; // jumlah game dimenangkan tim b
+  home: string; // slug
+  away: string; // slug
+  homeScore: number;
+  awayScore: number;
+  date?: string;
 };
 
-// Normalisasi singkatan yang “typo” ke yang benar
-function fixAbbr(s: string): string {
-  const x = s.trim().toUpperCase();
-  if (x === "GEEJ") return "GEEK"; // typo pada input week 2
-  return x;
+// normalisasi nama → slug
+export const TEAM_ALIASES: Record<string, string> = {
+  onic: "onic",
+  "onic esports": "onic",
+  "onic id": "onic",
+
+  dewa: "dewa",
+  "dewa united": "dewa",
+
+  navi: "navi",
+
+  evos: "evos",
+
+  tlid: "tlid",
+  "team liquid id": "tlid",
+
+  geek: "geek",
+  "geek fam": "geek",
+
+  btr: "btr",
+  "bigetron by vit": "btr",
+  bigetron: "btr",
+
+  rrq: "rrq",
+  "rrq hoshi": "rrq",
+
+  ae: "ae",
+  "alter ego": "ae",
+  "alter ego esports": "ae",
+};
+
+export function toSlug(name: string) {
+  const key = name.trim().toLowerCase();
+  return TEAM_ALIASES[key] ?? key;
 }
 
-// Data dari user (Week 1–3)
-export const H2H_RESULTS: H2HRow[] = [
+// WEEK 1–3 (dikonversi ke slug)
+export const H2H_MATCHES: Match[] = [
   // WEEK 1
-  { week: 1, a: "ONIC", b: "DEWA", a_games: 2, b_games: 0 },
-  { week: 1, a: "NAVI", b: "EVOS", a_games: 0, b_games: 2 },
+  { week: 1, home: toSlug("ONIC"), away: toSlug("DEWA"), homeScore: 2, awayScore: 0 },
+  { week: 1, home: toSlug("NAVI"), away: toSlug("EVOS"), homeScore: 0, awayScore: 2 },
 
-  { week: 1, a: "TLID", b: "GEEK", a_games: 1, b_games: 2 },
-  { week: 1, a: "ONIC", b: "BTR", a_games: 2, b_games: 0 },
-  { week: 1, a: "RRQ", b: "AE", a_games: 2, b_games: 1 },
+  { week: 1, home: toSlug("TLID"), away: toSlug("GEEK"), homeScore: 1, awayScore: 2 },
+  { week: 1, home: toSlug("ONIC"), away: toSlug("BTR"), homeScore: 2, awayScore: 0 },
+  { week: 1, home: toSlug("RRQ"), away: toSlug("AE"), homeScore: 2, awayScore: 1 },
 
-  { week: 1, a: "BTR", b: "NAVI", a_games: 1, b_games: 2 },
-  { week: 1, a: "GEEK", b: "RRQ", a_games: 2, b_games: 0 },
-  { week: 1, a: "AE", b: "DEWA", a_games: 2, b_games: 0 },
+  { week: 1, home: toSlug("BTR"), away: toSlug("NAVI"), homeScore: 1, awayScore: 2 },
+  { week: 1, home: toSlug("GEEK"), away: toSlug("RRQ"), homeScore: 2, awayScore: 0 },
+  { week: 1, home: toSlug("AE"), away: toSlug("DEWA"), homeScore: 2, awayScore: 0 },
 
   // WEEK 2
-  { week: 2, a: "ONIC", b: "GEEK", a_games: 2, b_games: 0 },
-  { week: 2, a: "DEWA", b: "NAVI", a_games: 2, b_games: 0 },
+  { week: 2, home: toSlug("ONIC"), away: toSlug("GEEK"), homeScore: 2, awayScore: 0 },
+  { week: 2, home: toSlug("DEWA"), away: toSlug("NAVI"), homeScore: 2, awayScore: 0 },
 
-  { week: 2, a: "GEEK", b: "BTR", a_games: 0, b_games: 2 }, // GEEJ -> GEEK
-  { week: 2, a: "AE", b: "EVOS", a_games: 2, b_games: 1 },
-  { week: 2, a: "TLID", b: "DEWA", a_games: 1, b_games: 2 },
+  { week: 2, home: toSlug("GEEK"), away: toSlug("BTR"), homeScore: 0, awayScore: 2 },
+  { week: 2, home: toSlug("AE"), away: toSlug("EVOS"), homeScore: 2, awayScore: 1 },
+  { week: 2, home: toSlug("TLID"), away: toSlug("DEWA"), homeScore: 1, awayScore: 2 },
 
-  { week: 2, a: "NAVI", b: "AE", a_games: 2, b_games: 0 },
-  { week: 2, a: "RRQ", b: "TLID", a_games: 2, b_games: 0 },
-  { week: 2, a: "BTR", b: "EVOS", a_games: 2, b_games: 1 },
+  { week: 2, home: toSlug("NAVI"), away: toSlug("AE"), homeScore: 2, awayScore: 0 },
+  { week: 2, home: toSlug("RRQ"), away: toSlug("TLID"), homeScore: 2, awayScore: 0 },
+  { week: 2, home: toSlug("BTR"), away: toSlug("EVOS"), homeScore: 2, awayScore: 1 },
 
   // WEEK 3
-  { week: 3, a: "NAVI", b: "RRQ", a_games: 0, b_games: 2 },
-  { week: 3, a: "EVOS", b: "TLID", a_games: 2, b_games: 0 },
+  { week: 3, home: toSlug("NAVI"), away: toSlug("RRQ"), homeScore: 0, awayScore: 2 },
+  { week: 3, home: toSlug("EVOS"), away: toSlug("TLID"), homeScore: 2, awayScore: 0 },
 
-  { week: 3, a: "EVOS", b: "GEEK", a_games: 2, b_games: 0 },
-  { week: 3, a: "BTR", b: "AE", a_games: 2, b_games: 1 },
-  { week: 3, a: "RRQ", b: "ONIC", a_games: 0, b_games: 2 },
+  { week: 3, home: toSlug("EVOS"), away: toSlug("GEEK"), homeScore: 2, awayScore: 0 },
+  { week: 3, home: toSlug("BTR"), away: toSlug("AE"), homeScore: 2, awayScore: 1 },
+  { week: 3, home: toSlug("RRQ"), away: toSlug("ONIC"), homeScore: 0, awayScore: 2 },
 
-  { week: 3, a: "DEWA", b: "BTR", a_games: 1, b_games: 2 },
-  { week: 3, a: "AE", b: "ONIC", a_games: 1, b_games: 2 },
-  { week: 3, a: "TLID", b: "NAVI", a_games: 0, b_games: 2 },
-].map((r) => ({ ...r, a: fixAbbr(r.a), b: fixAbbr(r.b) }));
-
-// Mapping singkatan -> slug (slug → nama resmi di predict.ts)
-export const ABBR_TO_SLUG: Record<string, string> = {
-  AE: "ae",
-  BTR: "btr",
-  DEWA: "dewa",
-  EVOS: "evos",
-  GEEK: "geek",
-  ONIC: "onic",
-  RRQ: "rrq",
-  TLID: "tlid",
-  NAVI: "navi",
-};
-
-// util: hitung H2H score (0..1) untuk team (slug) A vs B berdasar data games dimenangkan
-export function h2hScore(slugA: string, slugB: string): { a: number; b: number } {
-  // translate slug -> abbr
-  const abbrA = Object.entries(ABBR_TO_SLUG).find(([, s]) => s === slugA)?.[0];
-  const abbrB = Object.entries(ABBR_TO_SLUG).find(([, s]) => s === slugB)?.[0];
-  if (!abbrA || !abbrB) return { a: 0.5, b: 0.5 };
-
-  let aGames = 0;
-  let bGames = 0;
-
-  for (const r of H2H_RESULTS) {
-    const A = r.a,
-      B = r.b;
-    if (A === abbrA && B === abbrB) {
-      aGames += r.a_games;
-      bGames += r.b_games;
-    } else if (A === abbrB && B === abbrA) {
-      aGames += r.b_games;
-      bGames += r.a_games;
-    }
-  }
-
-  const total = aGames + bGames;
-  if (total === 0) return { a: 0.5, b: 0.5 }; // belum pernah ketemu
-  const aPct = aGames / total;
-  const bPct = bGames / total;
-  return { a: aPct, b: bPct };
-}
+  { week: 3, home: toSlug("DEWA"), away: toSlug("BTR"), homeScore: 1, awayScore: 2 },
+  { week: 3, home: toSlug("AE"), away: toSlug("ONIC"), homeScore: 1, awayScore: 2 },
+  { week: 3, home: toSlug("TLID"), away: toSlug("NAVI"), homeScore: 0, awayScore: 2 },
+];
