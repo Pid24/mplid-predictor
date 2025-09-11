@@ -1,12 +1,14 @@
 // src/app/api/predict/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { computePredict, StandRow, TeamStatsRow, PlayerStatsRow, SLUG_TO_OFFICIAL } from "@/lib/predict";
+import { getBaseUrl } from "@/lib/base-url";
+import { buildStandMap, predictAB, StandRow, TeamListItem } from "@/lib/predict";
+
+// biar konsisten dengan route lain
+export const revalidate = 30;
 
 function norm(s?: string) {
   return (s ?? "").trim().toLowerCase();
 }
-
-export const revalidate = 30;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -20,34 +22,45 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "home dan away tidak boleh sama" }, { status: 400 });
   }
 
-  // Ambil data: standings (proxy internal), team-stats & player-stats (upstream)
-  // NB: sesuaikan base jika kamu punya NEXT_PUBLIC_BASE_URL
-  const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") || "";
-  const standURL = base ? `${base}/api/standings` : `${req.nextUrl.origin}/api/standings`;
-
   try {
-    const [standRes, tstatsRes, pstatsRes] = await Promise.all([
-      fetch(standURL, { next: { revalidate: 60 } }),
-      fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/team-stats/?format=json`, { cache: "no-store" }),
-      fetch(`https://mlbb-stats.ridwaanhall.com/api/mplid/player-stats/?format=json`, { cache: "no-store" }),
-    ]);
+    const base = getBaseUrl();
+    // Ambil data standings (via proxy internal) & daftar teams (slug->nama)
+    const [standRes, teamsRes] = await Promise.all([fetch(`${base}/api/standings`, { next: { revalidate: 60 } }), fetch(`${base}/api/teams`, { next: { revalidate: 300 } })]);
 
     if (!standRes.ok) throw new Error(`standings HTTP ${standRes.status}`);
-    if (!tstatsRes.ok) throw new Error(`team-stats HTTP ${tstatsRes.status}`);
-    if (!pstatsRes.ok) throw new Error(`player-stats HTTP ${pstatsRes.status}`);
+    if (!teamsRes.ok) throw new Error(`teams HTTP ${teamsRes.status}`);
 
     const standings = (await standRes.json()) as StandRow[];
-    const teamStats = (await tstatsRes.json()) as TeamStatsRow[];
-    const playerStats = (await pstatsRes.json()) as PlayerStatsRow[];
+    const teams = (await teamsRes.json()) as TeamListItem[];
 
-    // Validasi slug
-    const validSlugs = new Set(Object.keys(SLUG_TO_OFFICIAL));
+    // validasi slug ada di list teams
+    const validSlugs = new Set(teams.map((t) => t.id));
     if (!validSlugs.has(norm(home)) || !validSlugs.has(norm(away))) {
       return NextResponse.json({ error: "Slug tim tidak valid. Gunakan: " + Array.from(validSlugs).join(", ") }, { status: 400 });
     }
 
-    const result = computePredict(norm(home), norm(away), standings, teamStats, playerStats);
-    return NextResponse.json(result, { status: 200 });
+    // build map dan prediksi
+    const standMap = buildStandMap(standings, teams);
+    const explain = predictAB(home, away, standMap);
+
+    const homeTeam = teams.find((t) => norm(t.id) === norm(home));
+    const awayTeam = teams.find((t) => norm(t.id) === norm(away));
+
+    return NextResponse.json(
+      {
+        ok: true,
+        teams: {
+          home: { slug: homeTeam?.id, name: homeTeam?.name, logo: homeTeam?.logo, tag: homeTeam?.tag },
+          away: { slug: awayTeam?.id, name: awayTeam?.name, logo: awayTeam?.logo, tag: awayTeam?.tag },
+        },
+        probability: {
+          [homeTeam?.name || home]: explain.probA,
+          [awayTeam?.name || away]: explain.probB,
+        },
+        explain, // berisi breakdown: h2h, form, points, gdiff, rawScore, probA, probB
+      },
+      { status: 200 }
+    );
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Internal error" }, { status: 500 });
   }
