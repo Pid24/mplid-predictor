@@ -3,6 +3,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import KeyPlayersPanel from "@/components/predictor/KeyPlayersPanel";
 import { buildStandMap, predictAB, StandRow as SRow, TeamListItem as TItem } from "@/lib/predict";
 import { toSlug } from "@/data/h2h";
 
@@ -14,7 +15,6 @@ type Props = {
 export default function PredictorV2({ teams, standings }: Props) {
   const standMap = useMemo(() => buildStandMap(standings, teams), [standings, teams]);
 
-  // default pilihan: dua tim pertama (atau kosong)
   const [a, setA] = useState<string>(teams[0]?.id ?? "");
   const [b, setB] = useState<string>(teams[1]?.id ?? "");
 
@@ -71,6 +71,9 @@ export default function PredictorV2({ teams, standings }: Props) {
                 <ExplainRow title="Game Diff" a={result.gdiff.a} b={result.gdiff.b} weight={result.gdiff.weight} hint="Selisih net game win (GW)." />
               </ul>
             </div>
+
+            {/* Key Players to Watch */}
+            <KeyPlayersPanel teamAId={a} teamBId={b} teamAName={aTeam?.name} teamBName={bTeam?.name} />
           </div>
         </>
       )}
@@ -111,7 +114,7 @@ function TeamBadge({ team }: { team?: TItem }) {
 }
 
 function ProbBar({ leftLabel, rightLabel, left, right }: { leftLabel: string; rightLabel: string; left: number; right: number }) {
-  const leftWidth = Math.max(10, Math.min(90, left)); // visual clamp biar enak dilihat
+  const leftWidth = Math.max(10, Math.min(90, left));
   const rightWidth = 100 - leftWidth;
   return (
     <div>
