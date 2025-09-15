@@ -81,4 +81,16 @@ export const H2H_MATCHES: Match[] = [
   { week: 3, home: toSlug("DEWA"), away: toSlug("BTR"), homeScore: 1, awayScore: 2 },
   { week: 3, home: toSlug("AE"), away: toSlug("ONIC"), homeScore: 1, awayScore: 2 },
   { week: 3, home: toSlug("TLID"), away: toSlug("NAVI"), homeScore: 0, awayScore: 2 },
+
+  // WEEK 4
+  { week: 4, home: toSlug("NAVI"), away: toSlug("ONIC"), homeScore: 1, awayScore: 2 },
+  { week: 4, home: toSlug("EVOS"), away: toSlug("DEWA"), homeScore: 2, awayScore: 0 },
+
+  { week: 4, home: toSlug("TLID"), away: toSlug("BTR"), homeScore: 0, awayScore: 2 },
+  { week: 4, home: toSlug("RRQ"), away: toSlug("EVOS"), homeScore: 2, awayScore: 0 },
+  { week: 4, home: toSlug("GEEK"), away: toSlug("AE"), homeScore: 0, awayScore: 2 },
+
+  { week: 4, home: toSlug("ONIC"), away: toSlug("TLID"), homeScore: 2, awayScore: 0 },
+  { week: 4, home: toSlug("BTR"), away: toSlug("RRQ"), homeScore: 2, awayScore: 1 },
+  { week: 4, home: toSlug("DEWA"), away: toSlug("GEEK"), homeScore: 2, awayScore: 1 },
 ];
