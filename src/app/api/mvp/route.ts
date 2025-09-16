@@ -1,4 +1,3 @@
-// src/app/api/mvp/route.ts
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +10,6 @@ type MVPRow = {
   point: number;
 };
 
-// === Fallback lokal: PASTE SEMUA ITEM DI SINI ===
 const FALLBACK: MVPRow[] = [
   {
     rank: 1,
@@ -96,9 +94,7 @@ export async function GET() {
         const data = (await res.json()) as MVPRow[];
         return NextResponse.json(Array.isArray(data) ? data : FALLBACK);
       }
-    } catch {
-      // lewat ke fallback
-    }
+    } catch {}
   }
   return NextResponse.json(FALLBACK);
 }

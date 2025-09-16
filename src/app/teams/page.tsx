@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 
 type TeamNorm = { id: string; name: string; tag?: string | null; logo?: string | null };
 
-// bentuk mentah dari upstream (fallback)
 type TeamRaw = {
   team_url?: string;
   team_logo?: string | null;
@@ -28,7 +27,7 @@ function deriveIdFromUrl(u?: string): string | null {
 
 async function getTeams(): Promise<{ teams: TeamNorm[]; ok: boolean; note?: string }> {
   try {
-    const base = await getBaseUrl(); // ⬅️ penting: await
+    const base = await getBaseUrl();
     const res = await fetch(`${base}/api/teams`, { next: { revalidate: 300 } });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
@@ -40,7 +39,6 @@ async function getTeams(): Promise<{ teams: TeamNorm[]; ok: boolean; note?: stri
       return { teams: data as TeamNorm[], ok: true };
     }
 
-    // fallback normalisasi
     const mapped: TeamNorm[] = (data as TeamRaw[])
       .map((t) => {
         const id = deriveIdFromUrl(t.team_url) ?? (t.team_name ?? "").toLowerCase();

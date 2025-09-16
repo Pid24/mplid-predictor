@@ -1,8 +1,7 @@
-// src/app/api/player-pools/route.ts
 import { NextResponse } from "next/server";
 
-export const runtime = "edge"; // ✅ Edge
-export const revalidate = 0; // selalu fresh via server
+export const runtime = "edge";
+export const revalidate = 0;
 
 const REMOTE = "https://mlbb-stats.ridwaanhall.com/api/mplid/player-pools/";
 

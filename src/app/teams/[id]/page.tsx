@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getBaseUrl } from "@/lib/base-url";
 
-// ⬇️ Client Component untuk modal pools (biarkan seperti semula)
 import PlayerHeroPools from "@/components/PlayerHeroPools";
 
 export const dynamic = "force-dynamic";

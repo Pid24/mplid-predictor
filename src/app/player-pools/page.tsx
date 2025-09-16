@@ -13,7 +13,7 @@ async function getData(sp: SearchParams) {
   if (sp.player) qs.set("player", sp.player);
   if (sp.raw) qs.set("raw", sp.raw);
 
-  const base = await getBaseUrl(); // ⬅️ penting: await
+  const base = await getBaseUrl();
   const url = `${base}/api/player-pools${qs.toString() ? `?${qs}` : ""}`;
 
   const res = await fetch(url, { cache: "no-store", next: { revalidate: 0 } });
@@ -21,7 +21,6 @@ async function getData(sp: SearchParams) {
   return res.json();
 }
 
-// Next.js 15+: searchParams bisa Promise
 export default async function PlayerPoolsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const data = await getData(sp);

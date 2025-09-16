@@ -1,4 +1,3 @@
-// src/components/PredictorV2.tsx
 "use client";
 
 import { useMemo, useState } from "react";

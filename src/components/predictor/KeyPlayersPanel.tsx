@@ -1,4 +1,3 @@
-// src/components/predictor/KeyPlayersPanel.tsx
 "use client";
 
 import { useEffect, useState } from "react";

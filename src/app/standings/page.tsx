@@ -24,7 +24,7 @@ async function getStandings(): Promise<{
   lastUpdated?: string;
 }> {
   try {
-    const base = await getBaseUrl(); // ⬅️ penting: await
+    const base = await getBaseUrl();
     const url = `${base}/api/standings`;
     const res = await fetch(url, { next: { revalidate: 0 } });
 

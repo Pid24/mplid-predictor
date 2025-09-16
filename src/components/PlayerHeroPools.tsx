@@ -1,4 +1,3 @@
-// src/components/PlayerHeroPools.tsx
 "use client";
 
 import { useEffect, useState } from "react";

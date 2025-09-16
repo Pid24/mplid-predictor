@@ -1,4 +1,3 @@
-// src/app/predictor/page.tsx
 import Link from "next/link";
 import { getBaseUrl } from "@/lib/base-url";
 import PredictorV2 from "@/components/PredictorV2";

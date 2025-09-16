@@ -1,4 +1,3 @@
-// src/components/player/PlayerPoolsMini.skeleton.tsx
 export default function PlayerPoolsMiniSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="mt-2 space-y-3">

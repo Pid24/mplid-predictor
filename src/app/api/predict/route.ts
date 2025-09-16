@@ -1,9 +1,7 @@
-// src/app/api/predict/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getBaseUrl } from "@/lib/base-url";
 import { buildStandMap, predictAB, type StandRow, type TeamListItem } from "@/lib/predict";
 
-// biar konsisten dengan route lain
 export const revalidate = 30;
 
 function norm(s?: string) {
@@ -25,9 +23,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const base = await getBaseUrl(); // IMPORTANT: await
+    const base = await getBaseUrl(); 
 
-    // Ambil data standings (via proxy internal) & daftar teams (slug->nama)
     const [standRes, teamsRes] = await Promise.all([fetch(`${base}/api/standings`, { next: { revalidate: 60 } }), fetch(`${base}/api/teams`, { next: { revalidate: 300 } })]);
 
     if (!standRes.ok) throw new Error(`standings HTTP ${standRes.status}`);
@@ -36,7 +33,6 @@ export async function GET(req: NextRequest) {
     const standings = (await standRes.json()) as StandRow[];
     const teams = (await teamsRes.json()) as TeamListItem[];
 
-    // validasi slug ada di list teams (pakai normalisasi)
     const validSlugs = new Set(teams.map((t) => norm(t.id)));
     if (!validSlugs.has(norm(home)) || !validSlugs.has(norm(away))) {
       return NextResponse.json(
@@ -52,7 +48,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // build map dan prediksi
     const standMap = buildStandMap(standings, teams);
     const explain = predictAB(home, away, standMap, { bo });
 
@@ -62,7 +57,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         ok: true,
-        params: { bo }, // info tambahan (opsional)
+        params: { bo }, 
         teams: {
           home: { slug: homeTeam?.id, name: homeTeam?.name, logo: homeTeam?.logo, tag: homeTeam?.tag },
           away: { slug: awayTeam?.id, name: awayTeam?.name, logo: awayTeam?.logo, tag: awayTeam?.tag },
@@ -71,7 +66,7 @@ export async function GET(req: NextRequest) {
           [homeTeam?.name || home]: explain.probA,
           [awayTeam?.name || away]: explain.probB,
         },
-        explain, // berisi breakdown: h2h, form (SoS+decay), points, gdiff, rawScore, probA, probB
+        explain, 
       },
       { status: 200 }
     );

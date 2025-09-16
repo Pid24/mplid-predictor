@@ -1,10 +1,5 @@
 import { headers } from "next/headers";
 
-/**
- * Absolute base URL untuk Server Components / Route Handlers.
- * - Pakai env kalau ada (mis. preview deploy)
- * - Kalau tidak ada, ambil dari request headers (dev & prod)
- */
 export async function getBaseUrl(): Promise<string> {
   const fromEnv = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
   if (fromEnv) return fromEnv;

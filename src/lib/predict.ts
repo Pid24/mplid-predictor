@@ -1,9 +1,7 @@
-// src/lib/predict.ts
 import { H2H_MATCHES, toSlug } from "@/data/h2h";
 
-// Bentuk minimal standings item yg kita pakai
 export type StandRow = {
-  team: string; // nama resmi
+  team: string;
   points?: number | null;
   game_diff?: number | null;
 };
@@ -20,7 +18,6 @@ export type Explain = {
   probB: number;
 };
 
-// -------------------- util umum --------------------
 function z(n: number, mean: number, std: number) {
   return std > 0 ? (n - mean) / std : 0;
 }
@@ -44,7 +41,6 @@ function safeNum(n: number | null | undefined) {
   return typeof n === "number" && isFinite(n) ? n : 0;
 }
 
-// -------------------- SoS + Time Decay --------------------
 function buildOpponentStrengthMap(standMap: Map<string, { points: number; gdiff: number }>) {
   const keys = Array.from(standMap.keys());
   const raw = keys.map((k) => {
@@ -134,7 +130,6 @@ function h2hDiffRecent(a: string, b: string, opts?: { tau?: number }) {
   return { aWins: aScore, bWins: bScore, diff };
 }
 
-// -------------------- existing helper --------------------
 export function buildStandMap(standings: StandRow[], teams: TeamListItem[]) {
   const nameBySlug = new Map<string, string>();
   for (const t of teams) {
@@ -151,31 +146,16 @@ export function buildStandMap(standings: StandRow[], teams: TeamListItem[]) {
   return map;
 }
 
-// -------------------- Best-of scaling --------------------
-/**
- * boScaling menyesuaikan “tajamnya” margin untuk seri yang lebih panjang.
- * - bo=3 → 1.00 (baseline)
- * - bo=5 → ~1.10
- * - bo=7 → ~1.18
- * Kamu bisa tweak K agar lebih/kurang agresif.
- */
 function boScaling(bo?: number) {
   const n = Math.max(1, Number(bo || 3));
   const K = 0.07; // sensitivitas
   return 1 + K * Math.max(0, n - 3);
 }
 
-// -------------------- MODEL: linear + logistic (SoS + BO) --------------------
-export function predictAB(
-  aSlug: string,
-  bSlug: string,
-  standMap: Map<string, { points: number; gdiff: number }>,
-  opts?: { bo?: number } // <- opsional, backward-compatible
-): Explain {
+export function predictAB(aSlug: string, bSlug: string, standMap: Map<string, { points: number; gdiff: number }>, opts?: { bo?: number }): Explain {
   const a = toSlug(aSlug),
     b = toSlug(bSlug);
 
-  // --- fitur utama ---
   const formA = computeSoSForm(a, standMap, { lastN: 5, tau: 3 });
   const formB = computeSoSForm(b, standMap, { lastN: 5, tau: 3 });
 
@@ -186,7 +166,6 @@ export function predictAB(
   const ga = standMap.get(a)?.gdiff ?? 0;
   const gb = standMap.get(b)?.gdiff ?? 0;
 
-  // --- normalisasi heuristik ---
   const zFormA = formA;
   const zFormB = formB;
   const zH2H = h2h;
@@ -195,30 +174,22 @@ export function predictAB(
   const zGDifA = z(ga, 0, 4);
   const zGDifB = z(gb, 0, 4);
 
-  // --- bobot ---
-  const wForm = 1.10;
-  const wPts = 0.70;
+  const wForm = 1.1;
+  const wPts = 0.7;
   const wGd = 0.45;
   const wH2H = 0.35;
 
-  // --- skor linear (A minus B) ---
-  let score =
-    wForm * (zFormA - zFormB) +
-    wPts * (zPtsA - zPtsB) +
-    wGd * (zGDifA - zGDifB) +
-    wH2H * zH2H;
+  let score = wForm * (zFormA - zFormB) + wPts * (zPtsA - zPtsB) + wGd * (zGDifA - zGDifB) + wH2H * zH2H;
 
-  // --- Best-of scaling ---
   const scale = boScaling(opts?.bo);
   score *= scale;
 
-  // --- mapping ke probabilitas ---
   const alpha = 2.8;
   const pA = clamp01(logistic(alpha * score));
   const pB = 1 - pA;
 
   return {
-    h2h: { a: Number((Math.max(0, zH2H)).toFixed(2)), b: Number((Math.max(0, -zH2H)).toFixed(2)), diff: Number(zH2H.toFixed(2)), weight: wH2H },
+    h2h: { a: Number(Math.max(0, zH2H).toFixed(2)), b: Number(Math.max(0, -zH2H).toFixed(2)), diff: Number(zH2H.toFixed(2)), weight: wH2H },
     form: { a: Number(zFormA.toFixed(2)), b: Number(zFormB.toFixed(2)), diff: Number((zFormA - zFormB).toFixed(2)), weight: wForm },
     points: { a: pa, b: pb, diff: pa - pb, weight: wPts },
     gdiff: { a: ga, b: gb, diff: ga - gb, weight: wGd },

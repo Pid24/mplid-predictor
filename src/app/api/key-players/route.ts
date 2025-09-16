@@ -1,4 +1,3 @@
-// src/app/api/key-players/route.ts
 import { NextResponse } from "next/server";
 
 type PlayerStats = {
@@ -10,10 +9,9 @@ type PlayerStats = {
   avg_deaths?: number | null;
   avg_assists?: number | null;
   avg_kda?: number | null;
-  kill_participation?: string | null; // "55%"
+  kill_participation?: string | null; 
 };
 
-// mapping slug → pola logo pemain (biar akurat nempel ke tim)
 const SLUG_TO_PLAYERLOGO_RE: Record<string, RegExp> = {
   ae: /\/ae[-_]/i,
   btr: /btr[_-]vit|bigetron|\/btr/i,

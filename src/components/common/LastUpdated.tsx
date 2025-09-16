@@ -1,5 +1,3 @@
-// src/components/common/LastUpdated.tsx
-// Server Component
 type Props = { iso?: string | null; label?: string };
 
 function formatJakarta(iso?: string | null) {

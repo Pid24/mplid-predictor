@@ -1,4 +1,3 @@
-// src/data/h2h.ts
 export type Match = {
   week: number;
   home: string; // slug
@@ -8,7 +7,6 @@ export type Match = {
   date?: string;
 };
 
-// normalisasi nama → slug
 export const TEAM_ALIASES: Record<string, string> = {
   onic: "onic",
   "onic esports": "onic",
@@ -44,7 +42,6 @@ export function toSlug(name: string) {
   return TEAM_ALIASES[key] ?? key;
 }
 
-// WEEK 1–3 (dikonversi ke slug)
 export const H2H_MATCHES: Match[] = [
   // WEEK 1
   { week: 1, home: toSlug("ONIC"), away: toSlug("DEWA"), homeScore: 2, awayScore: 0 },

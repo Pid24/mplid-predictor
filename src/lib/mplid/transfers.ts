@@ -1,4 +1,3 @@
-// src/lib/mplid/transfers.ts
 export type Transfer = {
   transfer_date: string;
   player_name: string;
@@ -13,7 +12,7 @@ const REMOTE = "https://mlbb-stats.ridwaanhall.com/api/mplid/transfers/";
 
 export async function fetchTransfersServer(): Promise<Transfer[]> {
   const res = await fetch(REMOTE, {
-    cache: "no-store", // data labil → jangan cache
+    cache: "no-store",
     headers: { Accept: "application/json", "User-Agent": "MPLID-Predictor/1.0 (+transfers)" },
     next: { revalidate: 0 },
   });

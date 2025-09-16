@@ -1,4 +1,3 @@
-// src/app/player-pools/loading.tsx
 export default function Loading() {
   return (
     <main className="mx-auto max-w-5xl p-6 space-y-8">

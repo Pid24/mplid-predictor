@@ -15,7 +15,6 @@ function LogoOrBadge({ src, alt, size = 24 }: { src?: string | null; alt?: strin
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt={alt ?? ""} width={size} height={size} className="rounded object-cover" style={{ width: size, height: size }} />;
   }
-  // fallback badge (tanpa network request)
   return (
     <div className="rounded bg-gray-200 text-[10px] flex items-center justify-center" style={{ width: size, height: size }} aria-label={alt} title={alt}>
       {getInitials(alt)}

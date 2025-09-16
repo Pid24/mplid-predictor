@@ -1,24 +1,22 @@
-// src/app/api/teams/route.ts
 export const revalidate = 300;
 
 type UpstreamTeam = {
-  id?: string | number; // kadang tidak ada
-  name?: string; // alternatif nama
-  team_name?: string; // nama yang dipakai upstream
+  id?: string | number;
+  name?: string;
+  team_name?: string;
   tag?: string | null;
   team_logo?: string | null;
   logo?: string | null;
-  team_url?: string | null; // contoh: https://id-mpl.com/team/ae
+  team_url?: string | null;
 };
 
 function slugFromTeamUrl(url?: string | null): string | null {
   if (!url) return null;
   try {
     const u = new URL(url);
-    const parts = u.pathname.split("/").filter(Boolean); // ["team","ae"]
+    const parts = u.pathname.split("/").filter(Boolean);
     return parts[parts.length - 1] || null;
   } catch {
-    // kalau bukan URL valid (mis. "id-mpl.com/team/ae" tanpa protokol)
     const parts = String(url).split("/").filter(Boolean);
     return parts[parts.length - 1] || null;
   }
@@ -42,15 +40,13 @@ export async function GET() {
     const raw = (await res.json()) as UpstreamTeam[];
 
     const normalized = (raw || []).map((t) => {
-      const fallbackId =
-        slugFromTeamUrl((t as any).team_url) ?? // banyak payload pakai team_url
-        (t.id != null ? String(t.id) : null);
+      const fallbackId = slugFromTeamUrl((t as any).team_url) ?? (t.id != null ? String(t.id) : null);
       return {
-        id: fallbackId, // ex: "ae", "btr", "rrq"
+        id: fallbackId,
         name: t.name || t.team_name || "Unknown",
         tag: t.tag ?? null,
         logo: t.logo ?? t.team_logo ?? null,
-        team_url: (t as any).team_url ?? null, // ikutkan untuk debug/link (opsional)
+        team_url: (t as any).team_url ?? null,
       };
     });
 

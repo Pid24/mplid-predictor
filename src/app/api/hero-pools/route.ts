@@ -1,4 +1,3 @@
-// src/app/api/hero-pools/route.ts
 import { NextResponse } from "next/server";
 
 const UPSTREAM = process.env.MPL_BASE?.replace(/\/+$/, "") || "https://mlbb-stats.ridwaanhall.com";
@@ -23,14 +22,12 @@ export async function GET(req: Request) {
     const list = (await res.json()) as any[];
 
     if (!playerQ) {
-      // kalau gak ada filter, balikin semua (hati-hati bisa besar)
       return NextResponse.json(list, { status: 200 });
     }
 
     const needle = normalizeName(playerQ);
     const filtered = list.filter((x) => normalizeName(x.player_name || "") === needle);
 
-    // Kalau gak ketemu exact, coba contains (quality-of-life)
     const finalData = filtered.length > 0 ? filtered : list.filter((x) => normalizeName(x.player_name || "").includes(needle));
 
     return NextResponse.json({ player: playerQ, results: finalData }, { status: 200 });
@@ -38,4 +35,3 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "proxy_crash", message: e?.message || String(e), url }, { status: 500 });
   }
 }
-    

@@ -1,5 +1,3 @@
-// src/lib/predictor/model.ts
-
 export type StandRow = {
   team: string;
   points?: number | null;
@@ -60,7 +58,7 @@ export function buildFeaturesForTeams(params: {
     wKdaEff: number;
     wObjCtrl: number;
     wDraftDepth: number;
-    alpha: number; // “tajamnya” sigmoid
+    alpha: number;
   }>;
 }) {
   const { teamA, teamB, standings, teamStats, playerPools, weights = {} } = params;
@@ -76,7 +74,6 @@ export function buildFeaturesForTeams(params: {
 
   const norm = (s?: string) => (s ?? "").trim().toLowerCase();
 
-  // ---- Standings: siapkan min-max
   const ptsArr = standings.map((s) => normNum(s.points ?? 0));
   const gdArr = standings.map((s) => normNum(s.game_diff ?? 0));
   const ptsMin = Math.min(...ptsArr, 0);
@@ -89,7 +86,6 @@ export function buildFeaturesForTeams(params: {
     return standings.find((s) => norm(s.team) === n);
   }
 
-  // ---- TeamStats: siapkan min-max untuk kdaEff & objCtrl
   const kdaArr = teamStats.map((ts) => {
     const k = normNum(ts.kills);
     const d = normNum(ts.deaths);
@@ -107,7 +103,6 @@ export function buildFeaturesForTeams(params: {
     return teamStats.find((s) => norm(s.team_name) === n);
   }
 
-  // ---- Player Pools: hitung “draft depth” = jumlah hero unik yang dipakai tim itu (memiliki pick > 0)
   function draftDepthForTeam(t: string) {
     const n = norm(t);
     let unique = 0;
@@ -118,7 +113,6 @@ export function buildFeaturesForTeams(params: {
     return unique;
   }
 
-  // Cari max depth untuk min-max (pakai keseluruhan liga)
   const depthAll: Record<string, number> = {};
   for (const hero of playerPools) {
     for (const p of hero.players ?? []) {

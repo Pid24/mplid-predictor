@@ -1,4 +1,3 @@
-// src/app/page.tsx
 import Link from "next/link";
 import { Suspense } from "react";
 import PlayerPoolsMini from "@/components/player/PlayerPoolsMini";

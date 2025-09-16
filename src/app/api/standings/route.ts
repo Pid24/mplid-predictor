@@ -1,8 +1,6 @@
-// src/app/api/standings/route.ts
-export const runtime = "edge"; // ✅ Edge
+export const runtime = "edge";
 export const revalidate = 0;
 
-// Normalisasi payload standings eksternal
 type UpstreamRow = {
   rank: number;
   team_name: string;

@@ -4,7 +4,6 @@ import { getJSON, StandingDTO, TeamDTO, TeamStatsDTO } from "@/lib/mpl";
 import { revalidateTag } from "next/cache";
 
 export const dynamic = "force-dynamic";
-// Pastikan route ini berjalan di Node.js runtime (bukan Edge) karena Prisma.
 export const runtime = "nodejs";
 
 export async function GET() {
@@ -13,9 +12,8 @@ export async function GET() {
 
     const teamIdByName = new Map<string, string>();
 
-    // Helper: upsert team by name dan cache id-nya di map
     const ensureTeamId = async (nameRaw: string) => {
-      const name = nameRaw.trim(); // normalisasi ringan
+      const name = nameRaw.trim();
       const cached = teamIdByName.get(name);
       if (cached) return cached;
 
@@ -28,7 +26,6 @@ export async function GET() {
       return rec.id;
     };
 
-    // 1) Teams
     for (const t of teams) {
       const name = t.name.trim();
       const team = await prisma.team.upsert({
@@ -48,7 +45,6 @@ export async function GET() {
       teamIdByName.set(name, team.id);
     }
 
-    // 2) Standings + rating seed
     for (const s of standings) {
       const teamId = await ensureTeamId(s.team);
       const season = s.season ?? "S??";
@@ -58,7 +54,6 @@ export async function GET() {
       const gd = s.game_diff ?? 0;
       const pts = s.points ?? 0;
 
-      // Seed rating sederhana (silakan tweak koefisien)
       const seededRating = 1500 + (winPct - 0.5) * 400 + gd * 8 + pts * 5;
 
       await prisma.standing.upsert({
@@ -85,7 +80,6 @@ export async function GET() {
       });
     }
 
-    // 3) Team stats
     for (const ts of teamStats) {
       const teamId = await ensureTeamId(ts.team);
 
@@ -111,12 +105,10 @@ export async function GET() {
       });
     }
 
-    // Revalidate semua halaman/endpoint yang pakai tag "mplid"
     revalidateTag("mplid");
 
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
-    // log singkat + response konsisten
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("[mplid-sync] error:", msg);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });

@@ -1,4 +1,3 @@
-// Server Component
 import Link from "next/link";
 import { getBaseUrl } from "@/lib/base-url";
 
@@ -21,7 +20,7 @@ function HeroLogoOrBadge({ src, alt }: { src?: string | null; alt: string }) {
 }
 
 async function getTopHeroes(limit = 5) {
-  const base = await getBaseUrl(); // ⬅️ penting: await
+  const base = await getBaseUrl(); 
   const res = await fetch(`${base}/api/player-pools?raw=1`, { cache: "no-store", next: { revalidate: 0 } });
   if (!res.ok) throw new Error(`Failed to load player-pools (${res.status})`);
 

@@ -1,4 +1,3 @@
-// src/components/transfers/TransfersMini.skeleton.tsx
 export default function TransfersMiniSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div className="space-y-3">

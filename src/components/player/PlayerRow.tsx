@@ -14,7 +14,7 @@ export type Player = {
 function formatRate(r: Player["pick_rate"]) {
   if (r == null) return "-";
   if (typeof r === "number") return `${r}%`;
-  return r; // sudah string dari API
+  return r;
 }
 
 type Props = { heroName: string; p: Player };
@@ -33,7 +33,6 @@ export default function PlayerRow({ heroName, p }: Props) {
           height={28}
           className="h-7 w-7 rounded-full object-cover"
           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-            // kalau avatar 404, sembunyikan
             e.currentTarget.style.display = "none";
           }}
         />

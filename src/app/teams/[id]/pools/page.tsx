@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getBaseUrl } from "@/lib/base-url";
 
-type Params = { id: string }; // harapkan id = kode tim, mis: RRQ / EVOS / ONIC ID
+type Params = { id: string };
 
 async function getPools(teamCode: string) {
   const base = getBaseUrl();
